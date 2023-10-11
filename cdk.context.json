@@ -1,0 +1,21 @@
+{
+  "availability-zones:account=144096089892:region=ap-southeast-4": [
+    "ap-southeast-4a",
+    "ap-southeast-4b",
+    "ap-southeast-4c"
+  ],
+  "availability-zones:account=806124249357:region=ap-southeast-4": [
+    "ap-southeast-4a",
+    "ap-southeast-4b",
+    "ap-southeast-4c"
+  ],
+  "availability-zones:account=806124249357:region=ap-southeast-2": [
+    "ap-southeast-2a",
+    "ap-southeast-2b",
+    "ap-southeast-2c"
+  ],
+  "hosted-zone:account=806124249357:domainName=pwed.me:region=ap-southeast-4": {
+    "Id": "/hostedzone/Z01252978MAIJD508OO9",
+    "Name": "pwed.me."
+  }
+}
