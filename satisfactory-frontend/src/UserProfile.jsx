@@ -5,7 +5,7 @@ export default function UserProfile() {
     const { user, signOut } = useContext(AuthContext)
 
     var userAttributes = Object.keys(user).map((key) => {
-        return <p>{key}: {user[key]}</p>
+        return <p key={key}>{key}: {user[key]}</p>
     })
 
 
