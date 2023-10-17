@@ -4,14 +4,17 @@ import { AuthContext } from "./AuthContext"
 export default function UserProfile() {
     const { user, signOut } = useContext(AuthContext)
 
+    var userAttributes = Object.keys(user).map((key) => {
+        return <p>{key}: {user[key]}</p>
+    })
+
+
     return (
         <div>
             {user && (
                 <div>
                     <h2>User Profile</h2>
-                    <p>Username: {user.username}</p>
-                    <p>Email: {user.email}</p>
-                    {/* Display any other user data here */}
+                    {userAttributes}
                 </div>
             )}
             <button onClick={signOut}>Sign Out</button>
