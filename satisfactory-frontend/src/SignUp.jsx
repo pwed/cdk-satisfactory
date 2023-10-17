@@ -22,10 +22,7 @@ function SignUp() {
 
     if (success) {
         return (
-            <div>
-                <h2>SignUp successful!</h2>
-                <p>Please check your email for the confirmation code.</p>
-            </div>
+            <Navigate to="/confirm-signup" />
         )
     }
 

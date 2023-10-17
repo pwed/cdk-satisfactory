@@ -46,6 +46,7 @@ export default function Login() {
             </form>
             {error && <p>{error}</p>}
             <Link to="/forgot-password">Forgot Password</Link>
+            <Link to="/signup">Sign Up</Link>
         </div>
     )
 }

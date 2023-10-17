@@ -8,6 +8,7 @@ import RouteGuard from "./RouteGuard"
 import { useContext } from "react"
 import ForgotPassword from "./ForgotPassword"
 import ResetPassword from "./ResetPassword"
+import API from "./API"
 
 function Navigation() {
   const { user } = useContext(AuthContext)
@@ -47,7 +48,7 @@ function App() {
             <Route path="/profile" element={<RouteGuard>
               <UserProfile />
             </RouteGuard>} />
-            <Route path="/" element={<h1>home</h1>} />
+            <Route path="/" element={<API />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
