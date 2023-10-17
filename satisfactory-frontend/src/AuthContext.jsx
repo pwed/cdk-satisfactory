@@ -25,7 +25,6 @@ function AuthProvider({ children }) {
     }, [])
 
     const signIn = async (username, password) => {
-        debugger
         await auth.signIn(username, password)
         await getCurrentUser()
     }
