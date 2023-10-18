@@ -45,12 +45,6 @@ export class CdkSatisfactoryAdminStack extends Stack {
             resources: ["*"]
         }))
 
-        const authorizer = new apigw.CognitoUserPoolsAuthorizer(this, "Authorizer", {
-            cognitoUserPools: [userPool]
-        })
-
-        const lambdaIntegration = new apigw.LambdaIntegration(lambdaFunction)
-
         const zone = r53.HostedZone.fromLookup(this, "Zone", { domainName: "pwed.me" })
 
         const certificate = new acm.Certificate(this, "Certificate", {
@@ -67,9 +61,30 @@ export class CdkSatisfactoryAdminStack extends Stack {
                 certificate,
             }
         })
+
+        const authorizer = new apigw.CognitoUserPoolsAuthorizer(this, "Authorizer", {
+            cognitoUserPools: [userPool]
+        })
+
+        const lambdaIntegration = new apigw.LambdaIntegration(lambdaFunction, {
+            timeout: Duration.seconds(29),
+            // proxy: false,
+            requestParameters: {
+                "integration.request.header.X-Amz-Invocation-Type": "method.request.header.InvocationType",
+                // "integration.response.header.Access-Control-Allow-Origin": '"*"',
+                // "integration.response.header.Access-Control-Allow-Methods": '"*"',
+                // "integration.response.header.Access-Control-Allow-Headers": '"*"',
+                
+            },
+            // integrationResponses:
+        })
         const endpoint = api.root.addResource("{proxy+}")
-        endpoint.addMethod("GET", lambdaIntegration, { authorizer })
-        endpoint.addCorsPreflight({allowOrigins: ["*"]})
+        endpoint.addMethod("GET", lambdaIntegration, {
+            authorizer, requestParameters: {
+                "method.request.header.InvocationType": false
+            },
+        })
+        endpoint.addCorsPreflight({ allowOrigins: ["*"] })
 
 
         const websiteBucket = new s3.Bucket(this, "WebsiteBucket")
@@ -87,6 +102,11 @@ export class CdkSatisfactoryAdminStack extends Stack {
             errorResponses: [
                 {
                     httpStatus: 404,
+                    responsePagePath: "/",
+                    responseHttpStatus: 200,
+                },
+                {
+                    httpStatus: 403,
                     responsePagePath: "/",
                     responseHttpStatus: 200,
                 }

@@ -8,7 +8,9 @@ import RouteGuard from "./RouteGuard"
 import { useContext } from "react"
 import ForgotPassword from "./ForgotPassword"
 import ResetPassword from "./ResetPassword"
-import API from "./API"
+import { signOut } from "./auth"
+import Dashboard from "./Dashboard"
+import "./App.css"
 
 function Navigation() {
   const { user } = useContext(AuthContext)
@@ -24,11 +26,17 @@ function Navigation() {
             <li>
               <Link to="/profile">Profile</Link>
             </li>
+            <li>
+              <Link onClick={signOut}>Sign Out</Link>
+            </li>
           </>
         ) : (
-          <li>
+          <><li>
             <Link to="/login">Login</Link>
-          </li>
+          </li><li>
+              <Link to="/signup">SignUp</Link>
+            </li>
+          </>
         )}
       </ul>
     </nav>
@@ -48,7 +56,7 @@ function App() {
             <Route path="/profile" element={<RouteGuard>
               <UserProfile />
             </RouteGuard>} />
-            <Route path="/" element={<API />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
