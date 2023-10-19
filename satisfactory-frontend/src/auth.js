@@ -107,7 +107,7 @@ export function confirmPassword(username, confirmationCode, newPassword) {
 export function signOut() {
     const cognitoUser = userPool.getCurrentUser()
     if (cognitoUser) {
-        cognitoUser.signOut()
+        cognitoUser.signOut(() => { window.location = "/" })
     }
 }
 

@@ -1,6 +1,8 @@
 import { useState, useContext } from "react"
 import { AuthContext } from "./AuthContext"
 import { Link, Navigate } from "react-router-dom";
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
 
 export default function Login() {
     const [username, setUsername] = useState("")
@@ -27,26 +29,31 @@ export default function Login() {
     }
 
     return (
-        <div>
-            <h2>Login</h2>
-            <form onSubmit={handleSubmit}>
-                <input
+        <Form onSubmit={handleSubmit} className="mt-3">
+            <Form.Group className="mb-3">
+                <Form.Label>Username</Form.Label>
+                <Form.Control
                     type="text"
-                    placeholder="Username"
+                    placeholder="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                 />
-                <input
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Label>Password</Form.Label>
+                <Form.Control
                     type="password"
-                    placeholder="Password"
+                    placeholder="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
-                <button type="submit">Login</button>
-            </form>
-            {error && <p>{error}</p>}
-            <Link to="/forgot-password">Forgot Password</Link>
-            <Link to="/signup">Sign Up</Link>
-        </div>
+            </Form.Group>
+            <Button variant="primary" type="submit">Login</Button>
+
+            {/* {error && <p>{error}</p>} */}
+            <Button variant="link" href="/forgot-password">Forgot Password</Button>
+            <Button variant="link" href="/signup">Sign Up</Button>
+        </Form>
     )
 }

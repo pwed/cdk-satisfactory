@@ -1,5 +1,6 @@
 import { useContext } from "react"
 import { AuthContext } from "./AuthContext"
+import { Link } from "react-router-dom"
 
 export default function UserProfile() {
     const { user, signOut } = useContext(AuthContext)
@@ -17,7 +18,7 @@ export default function UserProfile() {
                     {userAttributes}
                 </div>
             )}
-            <button onClick={signOut}>Sign Out</button>
+            <Link onClick={signOut}>Sign Out</Link>
         </div>
     )
 }

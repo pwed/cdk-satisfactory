@@ -1,11 +1,12 @@
 import { useState, useContext } from "react"
 import { AuthContext } from "./AuthContext"
 import { getSession } from "./auth";
+import Button from 'react-bootstrap/Button';
+import Card from 'react-bootstrap/Card';
+import Accordion from 'react-bootstrap/Accordion';
 
 export default function API({ path, method = "GET", label, async = false, description = "" }) {
     const [error, setError] = useState("")
-
-    const { user, signIn } = useContext(AuthContext)
 
     const [responseBody, setBody] = useState("")
 
@@ -31,24 +32,16 @@ export default function API({ path, method = "GET", label, async = false, descri
             setError(err.message)
         }
     }
-    var style = {
-        // border: "1px",
-        // borderColor: "white",
-        // borderStyle: "solid",
-        // width: "30%",
-        // display: "inline-block",
-        // height: "200px",
-        // margin: "5px",
-        // padding: "1px", 
-    }
     // Redirect to the profile page
     return (
-        <div style={style}>
-            <h4>{label}</h4>
-            <p>{description}</p>
-            <button onClick={submit}>{method}</button>
-            <p>{responseBody}</p>
-            {/* {error && <p>{error}</p>} */}
-        </div>
+        <Card border="secondary" className="">
+            <Card.Header>{label}</Card.Header>
+            <Button variant="info" className="mt-2 mx-2" onClick={submit}>{method}</Button>
+            <Card.Body>
+                <Card.Subtitle className="mb-2">{description}</Card.Subtitle>
+                <Card.Text>{responseBody}</Card.Text>
+                {/* {error && <p>{error}</p>} */}
+            </Card.Body>
+        </Card>
     )
 }

@@ -1,5 +1,5 @@
 import { AuthContext, AuthProvider } from "./AuthContext"
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Route, Routes } from "react-router-dom"
 import SignUp from "./SignUp"
 import ConfirmSignUp from "./ConfirmSignUp"
 import Login from "./Login"
@@ -10,30 +10,36 @@ import ForgotPassword from "./ForgotPassword"
 import ResetPassword from "./ResetPassword"
 import { signOut } from "./auth"
 import Dashboard from "./Dashboard"
-// import "./App.css"
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
-import NavDropdown from 'react-bootstrap/NavDropdown';
 
 function Navigation() {
   const { user } = useContext(AuthContext)
 
   return (
-    <nav>
-      <Link  to="/">Dashboard</Link>
-      {user ? (
-        <>
-          <Link  to="/profile">Profile</Link>
-          <Link  onClick={signOut}>Sign Out</Link>
-        </>
-      ) : (
-        <>
-          <Link  to="/login">Login</Link>
-          <Link  to="/signup">SignUp</Link>
-        </>
-      )}
-    </nav>
+    <Navbar expand="md" className="bg-body-tertiary">
+      <Container>
+        <Navbar.Brand href="/">Satisfactory Admin</Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
+            <Nav.Link href="/">Dashboard</Nav.Link>
+            {user ? (
+              <>
+                <Nav.Link href="/profile">Profile</Nav.Link>
+                <Nav.Link onClick={signOut}>Sign Out</Nav.Link>
+              </>
+            ) : (
+              <>
+                <Nav.Link href="/login">Login</Nav.Link>
+                <Nav.Link href="/signup">SignUp</Nav.Link>
+              </>
+            )}
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   )
 }
 
@@ -42,19 +48,21 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Navigation />
-        <main>
-          <Routes>
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/confirm-signup" element={<ConfirmSignUp />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<RouteGuard>
-              <UserProfile />
-            </RouteGuard>} />
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-          </Routes>
-        </main>
+        <Container >
+          <main>
+            <Routes>
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/confirm-signup" element={<ConfirmSignUp />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<RouteGuard>
+                <UserProfile />
+              </RouteGuard>} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+            </Routes>
+          </main>
+        </Container>
       </BrowserRouter>
     </AuthProvider>
   )
