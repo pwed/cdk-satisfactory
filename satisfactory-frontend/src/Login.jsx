@@ -3,11 +3,14 @@ import { AuthContext } from "./AuthContext"
 import { Link, Navigate } from "react-router-dom";
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import Toast from 'react-bootstrap/Toast';
+import ToastContainer from 'react-bootstrap/ToastContainer';
 
 export default function Login() {
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
+    const [show, setShow] = useState(true);
 
     const { user, signIn } = useContext(AuthContext)
 
@@ -19,6 +22,7 @@ export default function Login() {
             await signIn(username, password)
         } catch (err) {
             setError(err.message)
+            setShow(true)
         }
     }
 
@@ -37,6 +41,7 @@ export default function Login() {
                     placeholder="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    required
                 />
             </Form.Group>
 
@@ -47,13 +52,28 @@ export default function Login() {
                     placeholder="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
                 />
             </Form.Group>
             <Button variant="primary" type="submit">Login</Button>
-
-            {/* {error && <p>{error}</p>} */}
             <Button variant="link" href="/forgot-password">Forgot Password</Button>
             <Button variant="link" href="/signup">Sign Up</Button>
+
+            {
+                error &&                 
+                <ToastContainer
+                    className="p-3"
+                    position="middle-center"
+                    style={{ zIndex: 1 }}
+                    >
+                    <Toast onClose={() => {setShow(false); setError("")}} show={show} delay={3000} autohide>
+                        <Toast.Header closeButton={false}>
+                            <strong>Error Signing In</strong>
+                        </Toast.Header>
+                        <Toast.Body>{error}</Toast.Body>
+                    </Toast>
+                </ToastContainer>
+            }
         </Form>
     )
 }
