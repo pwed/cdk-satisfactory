@@ -14,4 +14,4 @@
   - [ ] Metrics
     - [ ] CPU
     - [ ] Memory
-- [ ] 
+- [ ] Add page not found route to react router
