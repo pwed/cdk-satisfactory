@@ -2,7 +2,7 @@ import { useState, useContext } from "react"
 import { AuthContext } from "./AuthContext"
 import { getSession } from "./auth";
 
-export default function API({ path, method = "GET", label, async = false }) {
+export default function API({ path, method = "GET", label, async = false, description = "" }) {
     const [error, setError] = useState("")
 
     const { user, signIn } = useContext(AuthContext)
@@ -32,20 +32,23 @@ export default function API({ path, method = "GET", label, async = false }) {
         }
     }
     var style = {
-        border: "1px",
-        borderColor: "white",
-        borderStyle: "solid",
-        width: "30%",
-        display: "inline-block",
-        maxHeight: "200px",
+        // border: "1px",
+        // borderColor: "white",
+        // borderStyle: "solid",
+        // width: "30%",
+        // display: "inline-block",
+        // height: "200px",
+        // margin: "5px",
+        // padding: "1px", 
     }
     // Redirect to the profile page
     return (
         <div style={style}>
             <h4>{label}</h4>
+            <p>{description}</p>
             <button onClick={submit}>{method}</button>
             <p>{responseBody}</p>
-            {error && <p>{error}</p>}
+            {/* {error && <p>{error}</p>} */}
         </div>
     )
 }

@@ -10,35 +10,29 @@ import ForgotPassword from "./ForgotPassword"
 import ResetPassword from "./ResetPassword"
 import { signOut } from "./auth"
 import Dashboard from "./Dashboard"
-import "./App.css"
+// import "./App.css"
+import Container from 'react-bootstrap/Container';
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+import NavDropdown from 'react-bootstrap/NavDropdown';
 
 function Navigation() {
   const { user } = useContext(AuthContext)
 
   return (
     <nav>
-      <ul>
-        <li>
-          <Link to="/">Home</Link>
-        </li>
-        {user ? (
-          <>
-            <li>
-              <Link to="/profile">Profile</Link>
-            </li>
-            <li>
-              <Link onClick={signOut}>Sign Out</Link>
-            </li>
-          </>
-        ) : (
-          <><li>
-            <Link to="/login">Login</Link>
-          </li><li>
-              <Link to="/signup">SignUp</Link>
-            </li>
-          </>
-        )}
-      </ul>
+      <Link  to="/">Dashboard</Link>
+      {user ? (
+        <>
+          <Link  to="/profile">Profile</Link>
+          <Link  onClick={signOut}>Sign Out</Link>
+        </>
+      ) : (
+        <>
+          <Link  to="/login">Login</Link>
+          <Link  to="/signup">SignUp</Link>
+        </>
+      )}
     </nav>
   )
 }
