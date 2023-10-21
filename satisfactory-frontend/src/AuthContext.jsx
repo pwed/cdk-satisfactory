@@ -13,7 +13,7 @@ function AuthProvider({ children }) {
             setUser(user)
         } catch (err) {
             // not logged in
-            console.log(err)
+            // console.log(err)
             setUser(null)
         }
     }

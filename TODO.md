@@ -1,8 +1,10 @@
 # TODO
 
 - [ ] Bootstrapify all pages
-  - [ ] Signup
+  - [x] Signup
 - [ ] Fix async api calls returning error
+- [ ] Limit Lambda permissions
+- [ ] Export references from game server stack to be consumed by API using Parameter Store
 - [ ] Add custom components for server info
   - [ ] Network
     - [ ] Add your IP to security group

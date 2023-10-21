@@ -1,6 +1,6 @@
 import { useState, useContext } from "react"
 import { AuthContext } from "./AuthContext"
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Toast from 'react-bootstrap/Toast';
