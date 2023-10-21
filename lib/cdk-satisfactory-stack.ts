@@ -153,7 +153,7 @@ export class CdkSatisfactoryStack extends Stack {
     const eip = new ec2.CfnEIP(this, "EIP")
 
     new ec2.CfnEIPAssociation(this, "EIPAssociaton", {
-      eip: eip.ref,
+      allocationId: eip.attrAllocationId,
       instanceId: server.instanceId,
     })
 

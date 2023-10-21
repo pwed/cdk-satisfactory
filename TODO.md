@@ -8,6 +8,7 @@
 - [ ] Add custom components for server info
   - [ ] Network
     - [ ] Add your IP to security group
+      - [ ] Use a prefix list to manage IP list
     - [ ] Domain Name
   - [ ] Status
   - [ ] Game Status
