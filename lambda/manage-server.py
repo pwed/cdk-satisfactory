@@ -7,7 +7,9 @@ import pprint
 
 ec2 = boto3.resource("ec2", region_name="ap-southeast-4")
 ssm = boto3.client("ssm", region_name="ap-southeast-4")
-instanceId = "i-060fc8a8cafc45e0f"
+instanceId = "i-0bba82eb1252de2cc"
+
+# TODO: REGION should be Env Var and Instance ID should be SSM param
 
 
 def craft_response(event, *, status_code=200, body={}):
