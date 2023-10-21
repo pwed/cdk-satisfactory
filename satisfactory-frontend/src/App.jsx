@@ -60,6 +60,8 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path='*' exact={true} element={<h1>Page not found</h1>} />
+              {/* TODO: Improve the Page not found page */}
             </Routes>
           </main>
         </Container>
