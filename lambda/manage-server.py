@@ -4,12 +4,16 @@ import boto3
 import sys
 import json
 import pprint
+import os
 
-ec2 = boto3.resource("ec2", region_name="ap-southeast-4")
-ssm = boto3.client("ssm", region_name="ap-southeast-4")
-instanceId = "i-0bba82eb1252de2cc"
 
-# TODO: REGION should be Env Var and Instance ID should be SSM param
+WORKLOAD_REGION = os.environ.get("WORKLOAD_REGION", "us-east-1")
+ec2 = boto3.resource("ec2", region_name=WORKLOAD_REGION)
+ssm = boto3.client("ssm", region_name=WORKLOAD_REGION)
+
+def getInstanceId():
+    instanceId = ssm.get_parameter(Name="/satisfactory/instance/id")["Parameter"]["Value"]
+    return instanceId
 
 
 def craft_response(event, *, status_code=200, body={}):
@@ -25,6 +29,7 @@ def craft_response(event, *, status_code=200, body={}):
 
 
 def run_commands(commands):
+    instanceId = getInstanceId()
     try:
         response = ssm.send_command(
             InstanceIds=[instanceId],
@@ -32,7 +37,8 @@ def run_commands(commands):
             Parameters={"commands": commands},
         )
     except Exception as e:
-        return {"success": False, "output": None, "error": e}
+        print(e)
+        return {"Success": False, "Output": None, "Error": "{}".format(e)}
     command_id = response["Command"]["CommandId"]
 
     ssm.get_waiter("command_executed").wait(CommandId=command_id, InstanceId=instanceId)
@@ -43,7 +49,6 @@ def run_commands(commands):
     return {
         "Success": True,
         "Output": output,
-        "Error": None,
     }
 
 
@@ -92,8 +97,9 @@ def satisfactory_stop(event):
 
 def satisfactory_update(event):
     stop_output = satisfactory_stop(event)
-    if not stop_output["Success"]:
-        return craft_response(event, status_code=500, body=stop_output["Error"])
+    if not stop_output["statusCode"] == 200:
+        print("Failed to stop service")
+        return craft_response(event, status_code=500, body=stop_output)
     update_output = run_commands(
         [
             "runuser -u steam -- /home/steam/steamcmd/steamcmd.sh"
@@ -104,16 +110,19 @@ def satisfactory_update(event):
         ]
     )
     if not update_output["Success"]:
-        return craft_response(event, status_code=500, body=update_output["Error"])
+        print("Failed to update app")
+        return craft_response(event, status_code=500, body=update_output)
     start_output = satisfactory_start(event)
-    if not start_output["Success"]:
-        return craft_response(event, status_code=500, body=start_output["Error"])
+    if not start_output["statusCode"] == 200:
+        print("Failed to start service")
+        return craft_response(event, status_code=500, body=start_output)
     return craft_response(
         event, body={"Status": start_output, "UpdateOutput": update_output}
     )
 
 
 def server_status(event):
+    instanceId = getInstanceId()
     instance = ec2.Instance(instanceId)
     security_group = ec2.SecurityGroup(instance.security_groups[0]["GroupId"])
     security_group.load()
@@ -136,6 +145,7 @@ def server_status(event):
 
 
 def server_stop(event):
+    instanceId = getInstanceId()
     satisfactory_stop(event)
     instance = ec2.Instance(instanceId)
     instance.stop()
@@ -143,10 +153,10 @@ def server_stop(event):
 
 
 def server_start(event):
+    instanceId = getInstanceId()
     instance = ec2.Instance(instanceId)
     instance.start()
     instance.wait_until_running()
-    satisfactory_update(event)
 
 
 def server_restart(event):

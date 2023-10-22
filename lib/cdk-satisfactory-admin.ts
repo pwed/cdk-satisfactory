@@ -13,16 +13,18 @@ import {
     aws_route53_targets,
     aws_s3 as s3,
     aws_s3_deployment,
-    aws_ssm as ssm,
     Arn,
     Duration,
-    aws_amplify as amplify,
 } from 'aws-cdk-lib'
 
 import { join } from 'path';
 
+export interface CdkSatisfactoryAdminStackProps extends StackProps {
+    workloadRegion: string,
+}
+
 export class CdkSatisfactoryAdminStack extends Stack {
-    constructor(scope: Construct, id: string, props?: StackProps) {
+    constructor(scope: Construct, id: string, props: CdkSatisfactoryAdminStackProps) {
         super(scope, id, props);
 
         const userPool = new cognito.UserPool(this, "UserPool", {
@@ -36,13 +38,49 @@ export class CdkSatisfactoryAdminStack extends Stack {
             handler: "manage-server.handler",
             architecture: lambda.Architecture.ARM_64,
             timeout: Duration.minutes(2),
+            environment: {
+                "WORKLOAD_REGION": props.workloadRegion,
+            }
         })
         lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
             actions: [
-                "*",
+                "ec2:DescribeInstances",
+                "ec2:DescribeSecurityGroups",
+                "ssm:GetCommandInvocation",
+
+                "ec2:DescribeManagedPrefixLists",
+                "ec2:ModifyManagedPrefixList",
+                "ec2:GetManagedPrefixListEntries",
+                "ssm:GetParameter",
             ],
             effect: iam.Effect.ALLOW,
             resources: ["*"]
+        }))
+        lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
+            actions: [
+                "ssm:SendCommand",
+                "ec2:StartInstances",
+                "ec2:StopInstances",
+            ],
+            effect: iam.Effect.ALLOW,
+            resources: [
+                Arn.format({
+                    region: props.workloadRegion,
+                    account: "",
+                    service: "ssm",
+                    partition: this.partition,
+                    resourceName: "AWS-RunShellScript",
+                    resource: "document"
+                }),
+                Arn.format({
+                    region: props.workloadRegion,
+                    account: this.account,
+                    service: "ec2",
+                    partition: this.partition,
+                    resourceName: "*",
+                    resource: "instance"
+                })
+            ]
         }))
 
         const zone = r53.HostedZone.fromLookup(this, "Zone", { domainName: "pwed.me" })
@@ -74,7 +112,7 @@ export class CdkSatisfactoryAdminStack extends Stack {
                 // "integration.response.header.Access-Control-Allow-Origin": '"*"',
                 // "integration.response.header.Access-Control-Allow-Methods": '"*"',
                 // "integration.response.header.Access-Control-Allow-Headers": '"*"',
-                
+
             },
             // integrationResponses:
         })

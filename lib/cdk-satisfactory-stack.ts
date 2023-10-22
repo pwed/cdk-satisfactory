@@ -1,7 +1,6 @@
 import { Construct } from 'constructs';
 import {
   Duration,
-  RemovalPolicy,
   Stack,
   StackProps,
   Tag,
@@ -13,6 +12,8 @@ import {
   aws_route53 as r53,
 } from 'aws-cdk-lib'
 import { join } from 'path';
+
+
 
 export class CdkSatisfactoryStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -50,28 +51,36 @@ export class CdkSatisfactoryStack extends Stack {
       vpc
     })
 
+    const prefixList = new ec2.CfnPrefixList(this, "PrefixList", {
+      maxEntries: 10,
+      addressFamily: "IPv4",
+      prefixListName: "SatisfactoryDedicatedServerAllowedIPs-" + this.region
+    })
+
+    const peer = ec2.Peer.prefixList(prefixList.ref)
+
     data.connections.allowDefaultPortFrom(sg)
 
     sg.addIngressRule(
-      ec2.Peer.anyIpv4(),
+      peer,
       ec2.Port.udp(15777),
       "Query Port",
     )
 
     sg.addIngressRule(
-      ec2.Peer.anyIpv4(),
+      peer,
       ec2.Port.udp(7777),
       "Game Port",
     )
 
     sg.addIngressRule(
-      ec2.Peer.anyIpv4(),
+      peer,
       ec2.Port.udp(15000),
       "Beacon Port",
     )
 
     sg.addIngressRule(
-      ec2.Peer.anyIpv4(),
+      peer,
       ec2.Port.icmpPing(),
       "Ping",
     )
@@ -249,5 +258,16 @@ export class CdkSatisfactoryStack extends Stack {
         },
       ],
     });
+
+    // SSM Export values
+    new ssm.StringParameter(this, "InstanceIdParameter", {
+      parameterName: "/satisfactory/instance/id",
+      stringValue: server.instanceId,
+    })
+
+    new ssm.StringParameter(this, "DnsName", {
+      parameterName: "/satisfactory/instance/dns",
+      stringValue: aRecord.domainName,
+    })
   }
 }
