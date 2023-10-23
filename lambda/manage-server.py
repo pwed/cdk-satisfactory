@@ -9,11 +9,22 @@ import os
 
 WORKLOAD_REGION = os.environ.get("WORKLOAD_REGION", "us-east-1")
 ec2 = boto3.resource("ec2", region_name=WORKLOAD_REGION)
+ec2_client = boto3.client("ec2", region_name=WORKLOAD_REGION)
 ssm = boto3.client("ssm", region_name=WORKLOAD_REGION)
 
+
 def getInstanceId():
-    instanceId = ssm.get_parameter(Name="/satisfactory/instance/id")["Parameter"]["Value"]
+    instanceId = ssm.get_parameter(Name="/satisfactory/instance/id")["Parameter"][
+        "Value"
+    ]
     return instanceId
+
+
+def getPrefixListId():
+    prefixListId = ssm.get_parameter(Name="/satisfactory/network/prefix-list")[
+        "Parameter"
+    ]["Value"]
+    return prefixListId
 
 
 def craft_response(event, *, status_code=200, body={}):
@@ -96,50 +107,54 @@ def satisfactory_stop(event):
 
 
 def satisfactory_update(event):
-    stop_output = satisfactory_stop(event)
-    if not stop_output["statusCode"] == 200:
-        print("Failed to stop service")
-        return craft_response(event, status_code=500, body=stop_output)
     update_output = run_commands(
         [
+            "systemctl start satisfactory.service",
             "runuser -u steam -- /home/steam/steamcmd/steamcmd.sh"
             " +force_install_dir /home/steam/SatisfactoryDedicatedServer"
             " +login anonymous"
             " +app_update 1690800"
             " validate +quit",
+            "systemctl start satisfactory.service",
         ]
     )
     if not update_output["Success"]:
         print("Failed to update app")
-        return craft_response(event, status_code=500, body=update_output)
-    start_output = satisfactory_start(event)
-    if not start_output["statusCode"] == 200:
-        print("Failed to start service")
-        return craft_response(event, status_code=500, body=start_output)
+        return craft_response(
+            event,
+            status_code=500,
+            body=update_output,
+        )
     return craft_response(
-        event, body={"Status": start_output, "UpdateOutput": update_output}
+        event,
+        body=update_output,
     )
 
 
 def server_status(event):
     instanceId = getInstanceId()
+    prefixListId = getPrefixListId()
     instance = ec2.Instance(instanceId)
+    prefix_list_entries_response = ec2_client.get_managed_prefix_list_entries(
+        PrefixListId=prefixListId
+    )
+    prefix_list_entries = prefix_list_entries_response["Entries"]
     security_group = ec2.SecurityGroup(instance.security_groups[0]["GroupId"])
     security_group.load()
     ports = []
     for rule in security_group.ip_permissions:
-        ports.append(f"{rule['FromPort']}/{rule['IpProtocol']}")
+        if not rule["IpProtocol"] == "icmp":
+            ports.append(f"{rule['FromPort']}/{rule['IpProtocol']}")
     tags = {}
     for tag in instance.tags:
         tags[tag["Key"]] = tag["Value"]
     return craft_response(
         event,
         body={
-            "Instance": instance.id,
-            "Ip": instance.public_ip_address,
+            "DNS": tags["PublicName"],
             "State": instance.state["Name"],
-            "Tags": tags,
             "Ports": ports,
+            "AllowedIps": prefix_list_entries,
         },
     )
 
@@ -149,36 +164,65 @@ def server_stop(event):
     satisfactory_stop(event)
     instance = ec2.Instance(instanceId)
     instance.stop()
-    instance.wait_until_stopped()
 
 
 def server_start(event):
     instanceId = getInstanceId()
     instance = ec2.Instance(instanceId)
     instance.start()
-    instance.wait_until_running()
 
 
 def server_restart(event):
-    server_stop(event)
-    server_start(event)
+    instanceId = getInstanceId()
+    instance = ec2.Instance(instanceId)
+    instance.reboot()
 
 
 def server_update(event):
-    satisfactory_stop(event)
-    output = run_commands(["yum upgrade -y"])
-    server_restart(event)
-    return
+    output = run_commands(
+        [
+            "systemctl stop satisfactory.service",
+            "yum upgrade -y",
+            "systemctl start satisfactory.service",
+        ]
+    )
+    if not output["Success"]:
+        return craft_response(event, status_code=500, body=output)
+    return craft_response(event, body=output)
+
+
+def add_ip_to_prefix_list(event):
+    try:
+        prefixListId = getPrefixListId()
+        ip = event["requestContext"]["identity"]["sourceIp"]
+        version = ec2_client.describe_managed_prefix_lists(
+            PrefixListIds=[prefixListId]
+        )["PrefixLists"][0]["Version"]
+        result = ec2_client.modify_managed_prefix_list(
+            PrefixListId=prefixListId,
+            AddEntries=[
+                {
+                    "Cidr": f"{ip}/32",
+                    "Description": "",
+                }
+            ],
+            CurrentVersion=version,
+        )
+    except Exception as e:
+        return craft_response(event, status_code=500, body={"Error": "{}".format(e)})
+    return craft_response(event, body=result)
 
 
 def handler(event: dict, context):
+    pprint.pp(event)
+    pprint.pp(context)
     match event["path"]:
         case "/satisfactory":
             return satisfactory_status(event)
-        
+
         case "/satisfactory/start":
             return satisfactory_start(event)
-        
+
         case "/satisfactory/stop":
             return satisfactory_stop(event)
 
@@ -199,6 +243,11 @@ def handler(event: dict, context):
 
         case "/server/update":
             return server_update(event)
+
+        case "/network/prefix-list/add":
+            match event["httpMethod"]:
+                case "PUT":
+                    return add_ip_to_prefix_list(event)
 
         case _:
             return craft_response(event, status_code=404, body="path not found")

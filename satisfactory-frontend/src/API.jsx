@@ -1,11 +1,9 @@
 import { useState, useContext } from "react"
-import { AuthContext } from "./AuthContext"
 import { getSession } from "./auth";
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
-import Accordion from 'react-bootstrap/Accordion';
 
-export default function API({ path, method = "GET", label, async = false, description = "" }) {
+export default function API({ path, method = "GET", label, description = "", async = false }) {
     const [error, setError] = useState("")
 
     const [responseBody, setBody] = useState("")
@@ -17,10 +15,10 @@ export default function API({ path, method = "GET", label, async = false, descri
         let headers = {
             Authorization: `Bearer ${session.idToken.jwtToken}`,
         }
+
         if (async) {
             headers["InvocationType"] = "Event"
         }
-
 
         try {
             const response = await fetch(`https://api.admin.satisfactory.pwed.me${path}`, {

@@ -1,5 +1,7 @@
 import { Construct } from 'constructs';
 import {
+    Arn,
+    Duration,
     Stack,
     StackProps,
     aws_apigateway as apigw,
@@ -13,8 +15,7 @@ import {
     aws_route53_targets,
     aws_s3 as s3,
     aws_s3_deployment,
-    Arn,
-    Duration,
+    aws_logs as logs,
 } from 'aws-cdk-lib'
 
 import { join } from 'path';
@@ -93,10 +94,18 @@ export class CdkSatisfactoryAdminStack extends Stack {
             validation: acm.CertificateValidation.fromDns(zone)
         })
 
+        const apiLog = new logs.LogGroup(this, "ApiLogGroup")
+
         const api = new apigw.RestApi(this, "API", {
             domainName: {
                 domainName: "api.admin.satisfactory.pwed.me",
                 certificate,
+            },
+            deployOptions: {
+                loggingLevel: apigw.MethodLoggingLevel.INFO,
+                accessLogDestination: new apigw.LogGroupLogDestination(apiLog),
+                accessLogFormat: apigw.AccessLogFormat.jsonWithStandardFields(),
+                dataTraceEnabled: true,
             }
         })
 
@@ -112,12 +121,17 @@ export class CdkSatisfactoryAdminStack extends Stack {
                 // "integration.response.header.Access-Control-Allow-Origin": '"*"',
                 // "integration.response.header.Access-Control-Allow-Methods": '"*"',
                 // "integration.response.header.Access-Control-Allow-Headers": '"*"',
-
+                
             },
             // integrationResponses:
         })
         const endpoint = api.root.addResource("{proxy+}")
         endpoint.addMethod("GET", lambdaIntegration, {
+            authorizer, requestParameters: {
+                "method.request.header.InvocationType": false
+            },
+        })
+        endpoint.addMethod("PUT", lambdaIntegration, {
             authorizer, requestParameters: {
                 "method.request.header.InvocationType": false
             },
@@ -152,8 +166,8 @@ export class CdkSatisfactoryAdminStack extends Stack {
         })
 
         new aws_s3_deployment.BucketDeployment(this, "Deployment", {
-            distribution,
-            distributionPaths: ["/", "/*"],
+            // distribution,
+            // distributionPaths: ["/", "/*"],
             sources: [
                 aws_s3_deployment.Source.asset(
                     join(__dirname, "..", "satisfactory-frontend"), {

@@ -80,7 +80,7 @@ export class CdkSatisfactoryStack extends Stack {
     )
 
     sg.addIngressRule(
-      peer,
+      ec2.Peer.anyIpv4(),
       ec2.Port.icmpPing(),
       "Ping",
     )
@@ -265,9 +265,14 @@ export class CdkSatisfactoryStack extends Stack {
       stringValue: server.instanceId,
     })
 
-    new ssm.StringParameter(this, "DnsName", {
-      parameterName: "/satisfactory/instance/dns",
+    new ssm.StringParameter(this, "DnsNameParameter", {
+      parameterName: "/satisfactory/network/dns",
       stringValue: aRecord.domainName,
+    })
+
+    new ssm.StringParameter(this, "PrefixListParameter", {
+      parameterName: "/satisfactory/network/prefix-list",
+      stringValue: prefixList.ref,
     })
   }
 }
