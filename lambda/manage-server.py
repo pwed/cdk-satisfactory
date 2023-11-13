@@ -109,12 +109,12 @@ def satisfactory_stop(event):
 def satisfactory_update(event):
     update_output = run_commands(
         [
-            "systemctl start satisfactory.service",
+            "systemctl stop satisfactory.service",
             "runuser -u steam -- /home/steam/steamcmd/steamcmd.sh"
             " +force_install_dir /home/steam/SatisfactoryDedicatedServer"
             " +login anonymous"
-            " +app_update 1690800"
-            " validate +quit",
+            " +app_update 1690800 validate" # " -beta experimental"
+            " +quit",
             "systemctl start satisfactory.service",
         ]
     )

@@ -8,7 +8,7 @@ import {
     ArrowClockwise,
     FileArrowDown,
     Globe,
-    HddRack,
+    Controller,
     PlayCircle,
     Plus,
     Power,
@@ -33,16 +33,13 @@ function usePageVisibility() {
     return isPageVisible;
 }
 
-export default function ServerStatus() {
+export default function GameStatus() {
     const isPageVisible = usePageVisibility();
     const [isPollingEnabled, setIsPollingEnabled] = useState(true);
     const [error, setError] = useState("");
     const timerIdRef = useRef(null);
     const [responseBody, setServerStatus] = useState({
-        DNS: "",
-        State: "",
-        Ports: [],
-        AllowedIps: [],
+        Status: "",
     });
 
     const apiCall = (path, method = "GET", async = false) => {
@@ -81,7 +78,7 @@ export default function ServerStatus() {
             }
 
             try {
-                const response = await fetch(`https://api.admin.satisfactory.pwed.me/server`, {
+                const response = await fetch(`https://api.admin.satisfactory.pwed.me/satisfactory`, {
                     method: "GET",
                     headers,
                 })
@@ -114,51 +111,22 @@ export default function ServerStatus() {
 
 
 
-    const addIp = async (e) => {
-        const session = await getSession()
-        setError("")
 
-        let headers = {
-            Authorization: `Bearer ${session.idToken.jwtToken}`,
-        }
-
-        try {
-            const response = await fetch(`https://api.admin.satisfactory.pwed.me/network/prefix-list/add`, {
-                method: "PUT",
-                headers,
-            })
-            // setServerStatus(await response.json())
-            console.log(responseBody)
-        } catch (err) {
-            setError(err.message)
-        }
-    }
     // Redirect to the profile page
     return (
         <Card border="secondary">
             <Card.Header>
                 <Stack direction="horizontal" gap={3}>
-                    <strong><HddRack /> Manage Server</strong>
+                    <strong><Controller /> Manage Game</strong>
                     {/* <Button variant="info">GET</Button> */}
-                    <Button className="ms-auto" onClick={apiCall("/server/stop", "GET", false)} hidden={responseBody.State != "running"} title="Power Off" variant="danger"><StopCircle /></Button>
-                    <Button className="ms-auto" onClick={apiCall("/server/start", "GET", false)} hidden={responseBody.State == "running"} title="Power On" variant="success"><PlayCircle /></Button>
-                    <Button onClick={apiCall("/server/restart", "GET", false)} disabled={responseBody.State != "running"} title="Restart" variant="warning"><ArrowClockwise /></Button>
-                    <Button onClick={apiCall("/server/update", "GET", false)} disabled={responseBody.State != "running"} title="Update Server" variant="success"><FileArrowDown /></Button>
+                    <Button className="ms-auto" onClick={apiCall("/satisfactory/stop", "GET", false)} hidden={responseBody.Status != "running"} title="Power Off" variant="danger"><StopCircle /></Button>
+                    <Button className="ms-auto" onClick={apiCall("/satisfactory/start", "GET", false)} hidden={responseBody.Status == "running"} title="Power On" variant="success"><PlayCircle /></Button>
+                    <Button onClick={apiCall("/satisfactory/restart", "GET", false)} disabled={responseBody.Status != "running"} title="Restart" variant="warning"><ArrowClockwise /></Button>
+                    <Button onClick={apiCall("/satisfactory/update", "GET", false)} disabled={responseBody.Status != "running"} title="Update Server" variant="success"><FileArrowDown /></Button>
                 </Stack></Card.Header>
             <Card.Body>
-                <Card.Subtitle className="mb-2">Server Status</Card.Subtitle>
-                <Card.Text> <Globe /> - {responseBody.DNS}</Card.Text>
-
-                <Card.Text>
-                    <Power /> - {responseBody.State.charAt(0).toUpperCase() + responseBody.State.slice(1)}
-                </Card.Text>
-                <Card.Text>Ports </Card.Text><Stack direction="horizontal" gap={3}>{
-                    responseBody.Ports.map((e) => { return <Badge key={e}>{e}</Badge> })
-                }</Stack>
-                <Card.Text>AllowedIps <Button variant="link" onClick={addIp}><Plus /></Button></Card.Text>
-                <Stack direction="horizontal" gap={3}>{
-                    responseBody.AllowedIps.map((e) => { return <Badge key={e.Cidr.split("/")[0]}>{e.Cidr.split("/")[0]}</Badge> })
-                }</Stack>
+                <Card.Subtitle className="mb-2">Game Status</Card.Subtitle>
+                <Card.Text> <Power /> - {responseBody.Status.charAt(0).toUpperCase() + responseBody.Status.slice(1)}</Card.Text>
                 {/* {error && <p>{error}</p>} */}
             </Card.Body>
         </Card>

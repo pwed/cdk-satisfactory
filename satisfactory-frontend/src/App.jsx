@@ -13,6 +13,8 @@ import Dashboard from "./Dashboard"
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
+import NotFound from "./NotFound"
+import { BoxArrowInRight, BoxArrowRight, Person, PersonPlus } from "react-bootstrap-icons"
 
 function Navigation() {
   const { user } = useContext(AuthContext)
@@ -23,17 +25,16 @@ function Navigation() {
         <Navbar.Brand href="/">Satisfactory Admin</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
-            <Nav.Link href="/">Dashboard</Nav.Link>
+          <Nav className="ms-auto">
             {user ? (
               <>
-                <Nav.Link href="/profile">Profile</Nav.Link>
-                <Nav.Link onClick={signOut}>Sign Out</Nav.Link>
+                <Nav.Link href="/profile"><Person /> Profile</Nav.Link>
+                <Nav.Link onClick={signOut}><BoxArrowRight /> Sign Out</Nav.Link>
               </>
             ) : (
               <>
-                <Nav.Link href="/login">Login</Nav.Link>
-                <Nav.Link href="/signup">SignUp</Nav.Link>
+                <Nav.Link href="/signup"><PersonPlus /> SignUp</Nav.Link>
+                <Nav.Link href="/login"><BoxArrowInRight /> Login</Nav.Link>
               </>
             )}
           </Nav>
@@ -60,7 +61,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path='*' exact={true} element={<h1>Page not found</h1>} />
+              <Route path='*' element={<NotFound />} />
               {/* TODO: Improve the Page not found page */}
             </Routes>
           </main>

@@ -28,8 +28,8 @@ export default function Login() {
 
     // If the user is logged in, don't show the login form
     if (user) {
-        // Redirect to the profile page
-        return <Navigate to="/profile" />
+        // Redirect to home
+        return <Navigate to="/" />
     }
 
     return (

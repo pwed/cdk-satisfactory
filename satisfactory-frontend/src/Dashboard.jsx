@@ -1,27 +1,26 @@
 import { useContext } from "react";
-import API from "./API";
 import { AuthContext } from "./AuthContext";
-import CardGroup from 'react-bootstrap/CardGroup';
 import Card from 'react-bootstrap/Card';
 import ServerStatus from "./ServerStatus";
+import GameStatus from "./GameStatus";
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
 
 export default function Dashboard() {
     const { user } = useContext(AuthContext)
     return (
         user ? (
-            <>
-                <CardGroup className="mt-3">
+            <>  <Row md={1} lg={2} className="g-4 mt-2">
+                <Col key="server-status">
                     <ServerStatus />
-                </CardGroup>
-                <CardGroup className="mt-3">
-                    <API label="Satisfactory Status" path="/satisfactory" description="Get the status of the game server service" />
-                    <API label="Satisfactory Start" path="/satisfactory/start" description="Start the game server service if it is not running" />
-                    <API label="Satisfactory Stop" path="/satisfactory/stop" description="Stop the game server service if it is running" />
-                    <API label="Satisfactory Update" path="/satisfactory/update" async description="Update to the latest version of the dedicated server from steam" />
-                </CardGroup>
+                </Col>
+                <Col key="game-status">
+                    <GameStatus />
+                </Col>
+            </Row>
             </>
         ) : (<>
-            <Card className="mt-5 col-12 mx-auto p-3">
+            <Card className="mt-5 col-12 mx-auto p-3 text-center">
                 <Card.Text>
                     Login or signup to control your Satisfactory game server
                 </Card.Text>

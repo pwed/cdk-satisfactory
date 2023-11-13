@@ -3,6 +3,7 @@
 - [ ] Bootstrapify all pages
   - [x] Signup
 - [ ] Fix async api calls returning error
+  - [ ] Move api calls to ssm documents
 - [x] Limit Lambda permissions
 - [x] Export references from game server stack to be consumed by API using Parameter Store
 - [x] Add custom components for server info
@@ -10,13 +11,14 @@
     - [x] Add your IP to security group
       - [x] Use a prefix list to manage IP list
     - [x] Domain Name
-  - [ ] Status
-  - [ ] Game Status
+  - [x] Server Status
+  - [x] Game Status
+    - [ ] Allow switching between beta version of server
   - [ ] Storage
   - [ ] Costs
   - [ ] Metrics
     - [ ] CPU
     - [ ] Memory
 - [x] Add page not found route to react router
-  - [ ] Add component
+  - [x] Add component
 - [ ] Add CORS
