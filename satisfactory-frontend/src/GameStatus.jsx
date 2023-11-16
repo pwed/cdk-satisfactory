@@ -126,7 +126,7 @@ export default function GameStatus() {
                 </Stack></Card.Header>
             <Card.Body>
                 <Card.Subtitle className="mb-2">Game Status</Card.Subtitle>
-                <Card.Text> <Power /> - {responseBody.Status.charAt(0).toUpperCase() + responseBody.Status.slice(1)}</Card.Text>
+                <Card.Text> <Power /> - {responseBody.Status ? responseBody.Status.charAt(0).toUpperCase() + responseBody.Status.slice(1) : ""}</Card.Text>
                 {/* {error && <p>{error}</p>} */}
             </Card.Body>
         </Card>

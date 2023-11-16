@@ -166,8 +166,8 @@ export class CdkSatisfactoryAdminStack extends Stack {
         })
 
         new aws_s3_deployment.BucketDeployment(this, "Deployment", {
-            // distribution,
-            // distributionPaths: ["/", "/*"],
+            distribution,
+            distributionPaths: ["/", "/*"],
             sources: [
                 aws_s3_deployment.Source.asset(
                     join(__dirname, "..", "satisfactory-frontend"), {
@@ -178,10 +178,6 @@ export class CdkSatisfactoryAdminStack extends Stack {
                             "-xc",
                             "export npm_config_update_notifier=false && export npm_config_cache=$(mktemp -d) && npm install && npm run build && cp -au dist/* /asset-output"
                         ],
-                        environment: {
-                            "VITE_USER_POOL_ID": userPool.userPoolId,
-                            "VITE_CLIENT_ID": client.userPoolClientId,
-                        }
                     }
                 }
                 )
