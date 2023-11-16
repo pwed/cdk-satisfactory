@@ -119,14 +119,14 @@ export default function GameStatus() {
                 <Stack direction="horizontal" gap={3}>
                     <strong><Controller /> Manage Game</strong>
                     {/* <Button variant="info">GET</Button> */}
-                    <Button className="ms-auto" onClick={apiCall("/satisfactory/stop", "GET", false)} hidden={responseBody.Status != "running"} title="Power Off" variant="danger"><StopCircle /></Button>
-                    <Button className="ms-auto" onClick={apiCall("/satisfactory/start", "GET", false)} hidden={responseBody.Status == "running"} title="Power On" variant="success"><PlayCircle /></Button>
-                    <Button onClick={apiCall("/satisfactory/restart", "GET", false)} disabled={responseBody.Status != "running"} title="Restart" variant="warning"><ArrowClockwise /></Button>
-                    <Button onClick={apiCall("/satisfactory/update", "GET", false)} disabled={responseBody.Status != "running"} title="Update Server" variant="success"><FileArrowDown /></Button>
+                    <Button className="ms-auto" onClick={apiCall("/satisfactory/stop", "GET", false)} hidden={responseBody.Status != "running"} title="Stop Dedicated Server" variant="danger"><StopCircle /></Button>
+                    <Button className="ms-auto" onClick={apiCall("/satisfactory/start", "GET", false)} hidden={responseBody.Status != "dead"} title="Start Dedicated Server On" variant="success"><PlayCircle /></Button>
+                    <Button onClick={apiCall("/satisfactory/restart", "GET", false)} hidden={!responseBody.Status} title="Restart Dedicated Server" variant="warning"><ArrowClockwise /></Button>
+                    <Button onClick={apiCall("/satisfactory/update", "GET", false)} hidden={!responseBody.Status} title="Update Server" variant="success"><FileArrowDown /></Button>
                 </Stack></Card.Header>
             <Card.Body>
                 <Card.Subtitle className="mb-2">Game Status</Card.Subtitle>
-                <Card.Text> <Power /> - {responseBody.Status ? responseBody.Status.charAt(0).toUpperCase() + responseBody.Status.slice(1) : ""}</Card.Text>
+                <Card.Text> <Power /> - {responseBody.Status ? responseBody.Status.charAt(0).toUpperCase() + responseBody.Status.slice(1) : "Offline"}</Card.Text>
                 {/* {error && <p>{error}</p>} */}
             </Card.Body>
         </Card>

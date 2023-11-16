@@ -142,8 +142,8 @@ export default function ServerStatus() {
                     {/* <Button variant="info">GET</Button> */}
                     <Button className="ms-auto" onClick={apiCall("/server/stop", "GET", false)} hidden={responseBody.State != "running"} title="Power Off" variant="danger"><StopCircle /></Button>
                     <Button className="ms-auto" onClick={apiCall("/server/start", "GET", false)} hidden={responseBody.State == "running"} title="Power On" variant="success"><PlayCircle /></Button>
-                    <Button onClick={apiCall("/server/restart", "GET", false)} disabled={responseBody.State != "running"} title="Restart" variant="warning"><ArrowClockwise /></Button>
-                    <Button onClick={apiCall("/server/update", "GET", false)} disabled={responseBody.State != "running"} title="Update Server" variant="success"><FileArrowDown /></Button>
+                    <Button onClick={apiCall("/server/restart", "GET", false)} hidden={responseBody.State != "running"} title="Restart" variant="warning"><ArrowClockwise /></Button>
+                    <Button onClick={apiCall("/server/update", "GET", false)} hidden={responseBody.State != "running"} title="Update Server" variant="success"><FileArrowDown /></Button>
                 </Stack></Card.Header>
             <Card.Body>
                 <Card.Subtitle className="mb-2">Server Status</Card.Subtitle>
