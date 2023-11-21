@@ -1,7 +1,0 @@
-@ShutdownOnFailedCommand 1
-@NoPromptForPassword 1
-@sSteamCmdForcePlatformType linux
-login anonymous
-force_install_dir /home/steam/satisfactory
-app_update 1690800 validate
-quit

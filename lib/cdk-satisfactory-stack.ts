@@ -1,17 +1,21 @@
 import { Construct } from 'constructs';
 import {
+  Arn,
   Duration,
   Stack,
   StackProps,
   Tag,
   Tags,
-  aws_iam as iam,
-  aws_ssm as ssm,
+  aws_autoscaling as autoscaling,
+  aws_backup as backup,
   aws_ec2 as ec2,
   aws_efs as efs,
+  aws_iam as iam,
   aws_route53 as r53,
+  aws_ssm as ssm,
 } from 'aws-cdk-lib'
 import { join } from 'path';
+import { readFileSync } from 'fs';
 
 
 
@@ -44,8 +48,18 @@ export class CdkSatisfactoryStack extends Stack {
       vpcSubnets: vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }),
       enableAutomaticBackups: true,
       encrypted: true,
-      // removalPolicy: RemovalPolicy.DESTROY,
     })
+
+    // const saveBackupPlan = new backup.BackupPlan(this, "SaveBackupPlan", {
+      
+    // })
+
+    const instanceParameter = new ssm.StringParameter(this, "InstanceIdParameter", {
+      parameterName: "/satisfactory/instance/id",
+      stringValue: "",
+    })
+
+    const eip = new ec2.CfnEIP(this, "EIP")
 
     const sg = new ec2.SecurityGroup(this, "SG", {
       vpc
@@ -106,7 +120,6 @@ export class CdkSatisfactoryStack extends Stack {
             ec2.InitPackage.yum("libgcc.i686"),
             ec2.InitPackage.yum("glibc.i686"),
             ec2.InitPackage.yum("git"),
-            ec2.InitFile.fromAsset("/etc/systemd/system/satisfactory.service", join(__dirname, "..", "assets", "satisfactory.service"), { owner: "steam" }),
             ec2.InitCommand.shellCommand([
               "mkdir -p /home/steam/.config",
               "test -f /sbin/mount.efs",
@@ -124,7 +137,16 @@ export class CdkSatisfactoryStack extends Stack {
               "chown -R steam:steam /home/steam"
             ),
             ec2.InitCommand.shellCommand(
-              'runuser -u steam -- /home/steam/steamcmd/steamcmd.sh +force_install_dir /home/steam/SatisfactoryDedicatedServer +login anonymous +app_update 1690800 validate +quit'
+              readFileSync(join(__dirname, "..", "assets", "satisfactory.sh")).toString()
+            ),
+            ec2.InitCommand.shellCommand([
+              `OLD_INSTANCE=$(aws ssm get-parameter --name ${instanceParameter.parameterName} --query "Parameter.Value" --output text)`,
+              "[ -z $OLD_INSTANCE ] && echo 'Instance does not exist' || aws ec2 stop-instance --instance-ids $OLD_INSTANCE && aws ec2 wait instance-stopped --instance-ids $OLD_INSTANCE",
+              'TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")',
+              'INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/instance-id)',
+              `aws ec2 associate-address --allocation-id ${eip.attrAllocationId} --instance-id $INSTANCE_ID --region ${this.region}`,
+              `aws ssm put-parameter --name /satisfactory/instance/id --value $INSTANCE_ID`
+            ].join("; ")
             ),
           ]),
         "02": new ec2.InitConfig([
@@ -133,17 +155,9 @@ export class CdkSatisfactoryStack extends Stack {
       },
     })
 
-    const server = new ec2.Instance(this, "Server", {
-      availabilityZone: this.availabilityZones[2],
+    const serverTemplate = new ec2.LaunchTemplate(this, "Server", {
       machineImage: ec2.MachineImage.latestAmazonLinux2(),
-      vpc,
       instanceType: new ec2.InstanceType("t3.xlarge"),
-      init,
-      initOptions: {
-        embedFingerprint: true,
-        timeout: Duration.minutes(10),
-      },
-      userDataCausesReplacement: true,
       blockDevices: [
         {
           deviceName: '/dev/xvda',
@@ -153,20 +167,73 @@ export class CdkSatisfactoryStack extends Stack {
         }
       ],
       securityGroup: sg,
-      vpcSubnets: vpc.selectSubnets({ subnetType: ec2.SubnetType.PUBLIC }),
       requireImdsv2: true,
-      ssmSessionPermissions: true,
       associatePublicIpAddress: true,
+      role: new iam.Role(this, "ServerRole", {
+        assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com")
+      })
     })
 
-    const eip = new ec2.CfnEIP(this, "EIP")
-
-    new ec2.CfnEIPAssociation(this, "EIPAssociaton", {
-      allocationId: eip.attrAllocationId,
-      instanceId: server.instanceId,
+    const asg = new autoscaling.AutoScalingGroup(this, "ASG", {
+      vpc,
+      vpcSubnets: vpc.selectSubnets({ subnetType: ec2.SubnetType.PUBLIC }),
+      init,
+      initOptions: {
+        embedFingerprint: true,
+      },
+      ssmSessionPermissions: true,
+      minCapacity: 0,
+      maxCapacity: 1,
+      mixedInstancesPolicy: {
+        instancesDistribution: {
+          onDemandBaseCapacity: 0,
+          onDemandPercentageAboveBaseCapacity: 0,
+        },
+        launchTemplate: serverTemplate,
+        launchTemplateOverrides: [
+          { instanceType: new ec2.InstanceType("m5.xlarge") },
+        ]
+      },
+      signals: autoscaling.Signals.waitForMinCapacity(),
     })
 
-    data.grantReadWrite(server.role)
+    data.grantReadWrite(asg.role)
+    asg.role.attachInlinePolicy(new iam.Policy(this, "ServerPolicy", {
+      statements: [
+        new iam.PolicyStatement({
+          actions: [
+            "ec2:AssociateAddress",
+            "ec2:StopInstance",
+            "ec2:DisassociateAddress",
+            "ec2:DescribeInstances",
+            "ec2:DescribeInstanceStatus",
+          ],
+          effect: iam.Effect.ALLOW,
+          resources: [
+            Arn.format({
+              service: "ec2",
+              resource: "elastic-ip",
+              resourceName: eip.attrAllocationId,
+            }, this),
+            Arn.format({
+              service: "ec2",
+              resource: "instance",
+              resourceName: "*"
+            }, this),
+            Arn.format({
+              service: "ec2",
+              resource: "network-interface",
+              resourceName: "*"
+            }, this),
+          ]
+        }),
+        new iam.PolicyStatement({
+          actions: ["ssm:GetParameter", "ssm:PutParameter"],
+          effect: iam.Effect.ALLOW,
+          resources: [instanceParameter.parameterArn]
+        }),
+      ]
+    }))
 
     const zone = r53.HostedZone.fromLookup(this, "pwed.me", { domainName: "pwed.me" })
 
@@ -179,8 +246,8 @@ export class CdkSatisfactoryStack extends Stack {
 
     const scheduleTag = new Tag("Schedule", "satisfactory")
 
-    Tags.of(server).add(scheduleTag.key, scheduleTag.value)
-    Tags.of(server).add("PublicName", aRecord.domainName)
+    Tags.of(asg).add(scheduleTag.key, scheduleTag.value)
+    Tags.of(asg).add("PublicName", aRecord.domainName)
 
     const maintanenceWindow = new ssm.CfnMaintenanceWindow(
       this,
@@ -260,9 +327,10 @@ export class CdkSatisfactoryStack extends Stack {
     });
 
     // SSM Export values
-    new ssm.StringParameter(this, "InstanceIdParameter", {
-      parameterName: "/satisfactory/instance/id",
-      stringValue: server.instanceId,
+
+    new ssm.StringParameter(this, "AsgParameter", {
+      parameterName: "/satisfactory/asg/name",
+      stringValue: asg.autoScalingGroupName,
     })
 
     new ssm.StringParameter(this, "DnsNameParameter", {
