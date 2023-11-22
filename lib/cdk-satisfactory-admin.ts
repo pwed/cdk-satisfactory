@@ -45,13 +45,15 @@ export class CdkSatisfactoryAdminStack extends Stack {
         })
         lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
             actions: [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:SetDesiredCapacity",
+                "autoscaling:StartInstanceRefresh",
                 "ec2:DescribeInstances",
-                "ec2:DescribeSecurityGroups",
-                "ssm:GetCommandInvocation",
-
                 "ec2:DescribeManagedPrefixLists",
-                "ec2:ModifyManagedPrefixList",
+                "ec2:DescribeSecurityGroups",
                 "ec2:GetManagedPrefixListEntries",
+                "ec2:ModifyManagedPrefixList",
+                "ssm:GetCommandInvocation",
                 "ssm:GetParameter",
             ],
             effect: iam.Effect.ALLOW,

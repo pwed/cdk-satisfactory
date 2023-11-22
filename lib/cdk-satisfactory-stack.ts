@@ -171,7 +171,8 @@ export class CdkSatisfactoryStack extends Stack {
       associatePublicIpAddress: true,
       role: new iam.Role(this, "ServerRole", {
         assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com")
-      })
+      }),
+      detailedMonitoring: true,
     })
 
     const asg = new autoscaling.AutoScalingGroup(this, "ASG", {
@@ -195,6 +196,7 @@ export class CdkSatisfactoryStack extends Stack {
         ]
       },
       signals: autoscaling.Signals.waitForCount(0),
+      groupMetrics: [autoscaling.GroupMetrics.all()],
     })
 
     data.grantReadWrite(asg.role)
@@ -244,87 +246,14 @@ export class CdkSatisfactoryStack extends Stack {
       ttl: Duration.seconds(30),
     })
 
-    const scheduleTag = new Tag("Schedule", "satisfactory")
-
-    Tags.of(asg).add(scheduleTag.key, scheduleTag.value)
-    Tags.of(asg).add("PublicName", aRecord.domainName)
-
-    const maintanenceWindow = new ssm.CfnMaintenanceWindow(
-      this,
-      'MaintanenceWindow',
-      {
-        allowUnassociatedTargets: false,
-        cutoff: 0,
-        duration: 1,
-        name: this.stackName + '-Maintanence-Window',
-        schedule: 'cron(0 4 ? * * *)',
-        scheduleTimezone: 'Australia/Melbourne',
-      }
-    );
-
-    const maintanenceTarget = new ssm.CfnMaintenanceWindowTarget(
-      this,
-      'MaintanenceTarget',
-      {
-        resourceType: 'INSTANCE',
-        targets: [
-          {
-            key: `tag:${scheduleTag.key}`,
-            values: [scheduleTag.value],
-          },
-        ],
-        windowId: maintanenceWindow.ref,
-      }
-    );
-
-    const taskRole = new iam.Role(this, 'AutomationRole', {
-      inlinePolicies: {
-        ec2Stop: new iam.PolicyDocument({
-          statements: [
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              resources: ['*'],
-              actions: ['ec2:StopInstances'],
-              conditions: {
-                StringEquals: JSON.parse(
-                  `{"aws:ResourceTag/${scheduleTag.key}": "${scheduleTag.value}"}`
-                ),
-              },
-            }),
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              resources: ['*'],
-              actions: ['ec2:DescribeInstances', 'ec2:DescribeInstanceStatus'],
-            }),
-          ],
-        }),
-      },
-      assumedBy: new iam.ServicePrincipal('ssm.amazonaws.com'),
-    });
-
-    new ssm.CfnMaintenanceWindowTask(this, 'BastionStop', {
-      priority: 1,
-      taskArn: 'AWS-StopEC2Instance',
-      taskType: 'AUTOMATION',
-      windowId: maintanenceWindow.ref,
-      taskInvocationParameters: {
-        maintenanceWindowAutomationParameters: {
-          documentVersion: '1',
-          parameters: {
-            InstanceId: ['{{RESOURCE_ID}}'],
-            AutomationAssumeRole: [taskRole.roleArn],
-          },
-        },
-      },
-      maxErrors: '1',
-      maxConcurrency: '1',
-      targets: [
-        {
-          key: 'WindowTargetIds',
-          values: [maintanenceTarget.ref],
-        },
-      ],
-    });
+    asg.scaleOnSchedule("BedTime", {
+      schedule: autoscaling.Schedule.cron({
+        hour: "0",
+        minute: "0"
+      }),
+      timeZone: "Australia/Melbourne",
+      desiredCapacity: 0,
+    })
 
     // SSM Export values
 
@@ -341,6 +270,16 @@ export class CdkSatisfactoryStack extends Stack {
     new ssm.StringParameter(this, "PrefixListParameter", {
       parameterName: "/satisfactory/network/prefix-list",
       stringValue: prefixList.ref,
+    })
+
+    new ssm.StringParameter(this, "EipParameter", {
+      parameterName: "/satisfactory/network/ip",
+      stringValue: eip.ref,
+    })
+
+    new ssm.StringParameter(this, "SecurityGroupParameter", {
+      parameterName: "/satisfactory/network/security-group",
+      stringValue: sg.securityGroupId,
     })
   }
 }

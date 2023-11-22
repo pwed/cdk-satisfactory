@@ -11,6 +11,7 @@ WORKLOAD_REGION = os.environ.get("WORKLOAD_REGION", "us-east-1")
 ec2 = boto3.resource("ec2", region_name=WORKLOAD_REGION)
 ec2_client = boto3.client("ec2", region_name=WORKLOAD_REGION)
 ssm = boto3.client("ssm", region_name=WORKLOAD_REGION)
+autoscaling = boto3.client("autoscaling", region_name=WORKLOAD_REGION)
 
 
 def getInstanceId():
@@ -25,6 +26,30 @@ def getPrefixListId():
         "Parameter"
     ]["Value"]
     return prefixListId
+
+
+def getAutoScalingGroup():
+    autoScalingGroupName = ssm.get_parameter(Name="/satisfactory/asg/name")[
+        "Parameter"
+    ]["Value"]
+    return autoScalingGroupName
+
+
+def getIP():
+    ip = ssm.get_parameter(Name="/satisfactory/network/ip")["Parameter"]["Value"]
+    return ip
+
+
+def getSecurityGroup():
+    securityGroup = ssm.get_parameter(Name="/satisfactory/network/security-group")[
+        "Parameter"
+    ]["Value"]
+    return securityGroup
+
+
+def getDomain():
+    domain = ssm.get_parameter(Name="/satisfactory/network/dns")["Parameter"]["Value"]
+    return domain
 
 
 def craft_response(event, *, status_code=200, body={}):
@@ -113,7 +138,7 @@ def satisfactory_update(event):
             "runuser -u steam -- /home/steam/steamcmd/steamcmd.sh"
             " +force_install_dir /home/steam/SatisfactoryDedicatedServer"
             " +login anonymous"
-            " +app_update 1690800 validate" # " -beta experimental"
+            " +app_update 1690800 validate"  # " -beta experimental"
             " +quit",
             "systemctl start satisfactory.service",
         ]
@@ -132,27 +157,35 @@ def satisfactory_update(event):
 
 
 def server_status(event):
+    asg = getAutoScalingGroup()
     instanceId = getInstanceId()
     prefixListId = getPrefixListId()
-    instance = ec2.Instance(instanceId)
+    desiredCapacity = autoscaling.describe_auto_scaling_groups(
+        AutoScalingGroupNames=[asg]
+    )["AutoScalingGroups"][0]["DesiredCapacity"]
+    ports = []
+    tags = {}
+    instanceState = "dead"
+    if desiredCapacity != 0:
+        instance = ec2.Instance(instanceId)
+        for tag in instance.tags:
+            tags[tag["Key"]] = tag["Value"]
+        instanceState = instance.state["Name"]
     prefix_list_entries_response = ec2_client.get_managed_prefix_list_entries(
         PrefixListId=prefixListId
     )
     prefix_list_entries = prefix_list_entries_response["Entries"]
-    security_group = ec2.SecurityGroup(instance.security_groups[0]["GroupId"])
+    security_group = ec2.SecurityGroup(getSecurityGroup())
     security_group.load()
-    ports = []
     for rule in security_group.ip_permissions:
         if not rule["IpProtocol"] == "icmp":
             ports.append(f"{rule['FromPort']}/{rule['IpProtocol']}")
-    tags = {}
-    for tag in instance.tags:
-        tags[tag["Key"]] = tag["Value"]
+
     return craft_response(
         event,
         body={
-            "DNS": tags["PublicName"],
-            "State": instance.state["Name"],
+            "DNS": getDomain(),
+            "State": instanceState,
             "Ports": ports,
             "AllowedIps": prefix_list_entries,
         },
@@ -160,22 +193,24 @@ def server_status(event):
 
 
 def server_stop(event):
-    instanceId = getInstanceId()
     satisfactory_stop(event)
-    instance = ec2.Instance(instanceId)
-    instance.stop()
+    autoscaling.set_desired_capacity(
+        AutoScalingGroupName=getAutoScalingGroup(),
+        DesiredCapacity=0,
+    )
 
 
 def server_start(event):
-    instanceId = getInstanceId()
-    instance = ec2.Instance(instanceId)
-    instance.start()
+    autoscaling.set_desired_capacity(
+        AutoScalingGroupName=getAutoScalingGroup(),
+        DesiredCapacity=1,
+    )
 
 
 def server_restart(event):
-    instanceId = getInstanceId()
-    instance = ec2.Instance(instanceId)
-    instance.reboot()
+    autoscaling.start_instance_refresh(
+        AutoScalingGroupName=getAutoScalingGroup(),
+    )
 
 
 def server_update(event):
