@@ -18,4 +18,4 @@ WorkingDirectory=/home/steam
 
 [Install]
 WantedBy=multi-user.target
-"
+" >> /etc/systemd/system/satisfactory.service

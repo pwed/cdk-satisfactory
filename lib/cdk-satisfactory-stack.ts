@@ -56,7 +56,7 @@ export class CdkSatisfactoryStack extends Stack {
 
     const instanceParameter = new ssm.StringParameter(this, "InstanceIdParameter", {
       parameterName: "/satisfactory/instance/id",
-      stringValue: "",
+      stringValue: "placeholder",
     })
 
     const eip = new ec2.CfnEIP(this, "EIP")
@@ -140,12 +140,12 @@ export class CdkSatisfactoryStack extends Stack {
               readFileSync(join(__dirname, "..", "assets", "satisfactory.sh")).toString()
             ),
             ec2.InitCommand.shellCommand([
-              `OLD_INSTANCE=$(aws ssm get-parameter --name ${instanceParameter.parameterName} --query "Parameter.Value" --output text)`,
-              "[ -z $OLD_INSTANCE ] && echo 'Instance does not exist' || aws ec2 stop-instance --instance-ids $OLD_INSTANCE && aws ec2 wait instance-stopped --instance-ids $OLD_INSTANCE",
+              `OLD_INSTANCE=$(aws --region ${this.region} ssm get-parameter --name ${instanceParameter.parameterName} --query "Parameter.Value" --output text)`,
+              `[ -z $OLD_INSTANCE ] && echo 'Instance does not exist' || aws --region ${this.region} ec2 stop-instance --instance-ids $OLD_INSTANCE && aws --region ${this.region} ec2 wait instance-stopped --instance-ids $OLD_INSTANCE`,
               'TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")',
               'INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/instance-id)',
-              `aws ec2 associate-address --allocation-id ${eip.attrAllocationId} --instance-id $INSTANCE_ID --region ${this.region}`,
-              `aws ssm put-parameter --name /satisfactory/instance/id --value $INSTANCE_ID`
+              `aws --region ${this.region} ec2 associate-address --allocation-id ${eip.attrAllocationId} --instance-id $INSTANCE_ID`,
+              `aws --region ${this.region} ssm put-parameter --name /satisfactory/instance/id --value $INSTANCE_ID --type String --overwrite`
             ].join("; ")
             ),
           ]),
@@ -155,9 +155,9 @@ export class CdkSatisfactoryStack extends Stack {
       },
     })
 
-    const serverTemplate = new ec2.LaunchTemplate(this, "Server", {
+    const serverTemplate = new ec2.LaunchTemplate(this, "ServerTemplate", {
       machineImage: ec2.MachineImage.latestAmazonLinux2(),
-      instanceType: new ec2.InstanceType("t3.xlarge"),
+      instanceType: new ec2.InstanceType("m5.xlarge"),
       blockDevices: [
         {
           deviceName: '/dev/xvda',
@@ -191,10 +191,10 @@ export class CdkSatisfactoryStack extends Stack {
         },
         launchTemplate: serverTemplate,
         launchTemplateOverrides: [
-          { instanceType: new ec2.InstanceType("m5.xlarge") },
+          { instanceType: new ec2.InstanceType("t3.xlarge") },
         ]
       },
-      signals: autoscaling.Signals.waitForMinCapacity(),
+      signals: autoscaling.Signals.waitForCount(0),
     })
 
     data.grantReadWrite(asg.role)
