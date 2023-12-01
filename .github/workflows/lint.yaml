@@ -48,6 +48,8 @@ jobs:
           # list of changed files within `super-linter`
           fetch-depth: 0
 
+      - run: cat .github/super-linter.env >> "$GITHUB_ENV"
+
       ################################
       # Run Linter against code base #
       ################################
