@@ -1,11 +1,11 @@
 #!/bin/env python
 
-import boto3
 import json
 import os
 import pprint
 import sys
 
+import boto3
 
 WORKLOAD_REGION = os.environ.get("WORKLOAD_REGION", "us-east-1")
 ec2 = boto3.resource("ec2", region_name=WORKLOAD_REGION)
