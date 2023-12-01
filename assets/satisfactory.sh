@@ -8,7 +8,7 @@ Wants=network-online.target
 After=syslog.target network.target nss-lookup.target network-online.target
 
 [Service]
-Environment="LD_LIBRARY_PATH=./linux64"
+Environment='LD_LIBRARY_PATH=./linux64'
 ExecStart=/home/steam/SatisfactoryDedicatedServer/FactoryServer.sh multihome=$(hostname -I)
 User=steam
 Group=steam
