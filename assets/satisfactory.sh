@@ -2,7 +2,7 @@
 
 runuser -u steam -- /home/steam/steamcmd/steamcmd.sh +force_install_dir /home/steam/SatisfactoryDedicatedServer +login anonymous +app_update 1690800 validate +quit
 
-echo "[Unit]
+echo """[Unit]
 Description=Satisfactory dedicated server
 Wants=network-online.target
 After=syslog.target network.target nss-lookup.target network-online.target
@@ -18,4 +18,4 @@ WorkingDirectory=/home/steam
 
 [Install]
 WantedBy=multi-user.target
-" >> /etc/systemd/system/satisfactory.service
+""" >> /etc/systemd/system/satisfactory.service
