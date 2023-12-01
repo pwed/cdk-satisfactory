@@ -2,8 +2,8 @@
 
 - [ ] Bootstrapify all pages
   - [x] Signup
-- [ ] Fix async api calls returning error
-  - [ ] Move api calls to ssm documents
+- [ ] Fix async API calls returning error
+  - [ ] Move API calls to ssm documents
 - [x] Limit Lambda permissions
 - [x] Export references from game server stack to be consumed by API using Parameter Store
 - [x] Add custom components for server info
