@@ -3,14 +3,11 @@ import { getSession } from './auth'
 import Button from 'react-bootstrap/Button'
 import Card from 'react-bootstrap/Card'
 import Stack from 'react-bootstrap/Stack'
-import Badge from 'react-bootstrap/Badge'
 import {
   ArrowClockwise,
   FileArrowDown,
-  Globe,
   Controller,
   PlayCircle,
-  Plus,
   Power,
   StopCircle
 } from 'react-bootstrap-icons'

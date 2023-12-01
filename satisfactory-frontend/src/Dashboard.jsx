@@ -18,7 +18,7 @@ export default function Dashboard () {
           <Col key='game-status'>
             <GameStatus />
           </Col>
-            </Row>
+        </Row>
         </>
         )
       : (<>

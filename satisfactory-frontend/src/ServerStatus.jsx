@@ -15,7 +15,7 @@ import {
   StopCircle
 } from 'react-bootstrap-icons'
 
-function usePageVisibility () {
+function usePageVisibility() {
   const [isPageVisible, setIsPageVisible] = useState(!document.hidden)
 
   useEffect(() => {
@@ -33,7 +33,7 @@ function usePageVisibility () {
   return isPageVisible
 }
 
-export default function ServerStatus () {
+export default function ServerStatus() {
   const isPageVisible = usePageVisibility()
   const [isPollingEnabled, setIsPollingEnabled] = useState(true)
   const [error, setError] = useState('')
@@ -149,14 +149,16 @@ export default function ServerStatus () {
         <Card.Text>
           <Power /> - {responseBody.State.charAt(0).toUpperCase() + responseBody.State.slice(1)}
         </Card.Text>
-        <Card.Text>Ports </Card.Text><Stack direction='horizontal' gap={3}>{
-                    responseBody.Ports.map((e) => { return <Badge key={e}>{e}</Badge> })
-                }
+        <Card.Text>Ports </Card.Text>
+        <Stack direction='horizontal' gap={3}>
+          {
+            responseBody.Ports.map((e) => { return <Badge key={e}>{e}</Badge> })
+          }
         </Stack>
         <Card.Text>AllowedIps <Button variant='link' onClick={addIp}><Plus /></Button></Card.Text>
         <Stack direction='horizontal' gap={3}>{
-                    responseBody.AllowedIps.map((e) => { return <Badge key={e.Cidr.split('/')[0]}>{e.Cidr.split('/')[0]}</Badge> })
-                }
+          responseBody.AllowedIps.map((e) => { return <Badge key={e.Cidr.split('/')[0]}>{e.Cidr.split('/')[0]}</Badge> })
+        }
         </Stack>
         {/* {error && <p>{error}</p>} */}
       </Card.Body>

@@ -1,10 +1,10 @@
 #!/bin/env python
 
 import boto3
-import sys
 import json
-import pprint
 import os
+import pprint
+import sys
 
 
 WORKLOAD_REGION = os.environ.get("WORKLOAD_REGION", "us-east-1")

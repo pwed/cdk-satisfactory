@@ -58,9 +58,11 @@ function App () {
               <Route path='/confirm-signup' element={<ConfirmSignUp />} />
               <Route path='/login' element={<Login />} />
               <Route
-                path='/profile' element={<RouteGuard>
-                  <UserProfile />
-                </RouteGuard>}
+                path='/profile' element={
+                  <RouteGuard>
+                    <UserProfile />
+                  </RouteGuard>
+                }
               />
               <Route path='/' element={<Dashboard />} />
               <Route path='/forgot-password' element={<ForgotPassword />} />

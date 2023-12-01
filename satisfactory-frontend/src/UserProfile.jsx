@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/Button'
 import Stack from 'react-bootstrap/Stack'
 
 export default function UserProfile () {
-  const { user, signOut } = useContext(AuthContext)
+  const { user } = useContext(AuthContext)
 
   return (
 
@@ -24,7 +24,6 @@ export default function UserProfile () {
       </Form.Group>
       <Stack direction='horizontal'>
         <Button disabled variant='primary' type='submit'>Update</Button>
-        <Button className='ms-auto' variant='secondary' type='submit'>Sign Out</Button>
       </Stack>
     </Form>
   )
