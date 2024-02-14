@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Bootstrapify all pages
+- [x] Bootstrapify all pages
   - [x] Signup
 - [ ] Fix async API calls returning error
   - [ ] Move API calls to ssm documents

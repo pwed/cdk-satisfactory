@@ -35,11 +35,6 @@ def getAutoScalingGroup():
     return autoScalingGroupName
 
 
-def getIP():
-    ip = ssm.get_parameter(Name="/satisfactory/network/ip")["Parameter"]["Value"]
-    return ip
-
-
 def getSecurityGroup():
     securityGroup = ssm.get_parameter(Name="/satisfactory/network/security-group")[
         "Parameter"
